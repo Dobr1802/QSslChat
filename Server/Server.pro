@@ -14,9 +14,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         server.cpp \
-    sslserver.cpp
+    sslserver.cpp \
+    registrationdialog.cpp \
+    user.cpp
 
 HEADERS  += server.h \
-    sslserver.h
+    sslserver.h \
+    user.h \
+    registrationdialog.h
 
-FORMS    += server.ui
+FORMS    += server.ui \
+    registrationdialog.ui

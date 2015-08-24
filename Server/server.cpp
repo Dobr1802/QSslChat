@@ -2,6 +2,7 @@
 #include <QDateTime>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QMessageBox>
 #include "server.h"
 #include "ui_server.h"
 
@@ -12,6 +13,11 @@ Server::Server(QWidget *parent) :
     ui(new Ui::Server)
 {
   ui->setupUi(this);
+
+  regDialog = new RegistrationDialog(this);
+
+  //If the file whis usernames exist, save them in container.
+  checkUsersFile();
 
   // Check for SSL support.  If SSL support is not available, show a
   // message to the user describing what to do to enable SSL support.
@@ -32,7 +38,13 @@ Server::Server(QWidget *parent) :
     ui->logTextEdit->setText(noSslMsg);
   }
 
+  foreach (User *u, users)
+  {
+      qDebug() << u->name() << "    " << u->passwd();
+  }
+
   connect(&server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
+  connect(regDialog, SIGNAL(pushButtonAccept(QString, QString)), this, SLOT(addUser(QString,QString)));
 }
 
 Server::~Server()
@@ -120,6 +132,21 @@ void Server::checkFileStatus()
   }
 }
 
+void Server::checkUsersFile()
+{
+    usersFile = new QFile("usersFile.txt");
+    if (!usersFile->open(QIODevice::ReadOnly | QIODevice::Text))
+      return;
+
+    while (!usersFile->atEnd())
+    {
+      QString line = usersFile->readLine();
+      QStringList listFromLine = line.split("::");
+      users.push_back(new User(listFromLine[0], listFromLine[1]));
+    }
+    usersFile->close();
+}
+
 // Accept connection from server and initiate the SSL handshake
 void Server::acceptConnection()
 {
@@ -151,7 +178,7 @@ void Server::handshakeComplete()
   connect(socket, SIGNAL(readyRead()), this, SLOT(receiveMessage()));
 
   ui->logTextEdit->append(QString("[%1] Accepted connection from %2:%3")
-                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz ap"))
+                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort()));
 
@@ -174,7 +201,7 @@ void Server::sslErrors(const QList<QSslError> &errors)
   }
 
   ui->logTextEdit->append(QString("[%1] %2:%3 reported the following SSL errors: %4")
-      .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz ap"))
+      .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(errorStrings));
@@ -193,7 +220,7 @@ void Server::receiveMessage()
         .arg(socket->peerPort());
 
     ui->logTextEdit->append(QString("[%1] %2 sent: %3")
-        .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz ap"))
+        .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
         .arg(sender)
         .arg(message.constData()));
 
@@ -212,7 +239,7 @@ void Server::connectionClosed()
   assert(socket);
 
   ui->logTextEdit->append(QString("[%1] Connection from %2:%3 closed: %4")
-                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz ap"))
+                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(socket->errorString()));
@@ -227,11 +254,27 @@ void Server::connectionFailure()
   assert(socket);
 
   ui->logTextEdit->append(QString("[%1] Connection from %2:%3 failed: %4")
-                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz ap"))
+                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(socket->errorString()));
   sockets.removeOne(socket);
   socket->disconnect();
   socket->deleteLater();
+}
+
+void Server::on_regNewUsrButton_clicked()
+{
+    regDialog->setVisible(true);
+}
+
+void Server::addUser(QString name, QString pwd)
+{
+    users.push_back(new User(name, pwd));
+    if (!usersFile->open(QIODevice::Append | QIODevice::Text))
+        return;
+
+    QString line = "\n" + name + "::" + pwd;
+    usersFile->write(line.toStdString().c_str());
+    usersFile->close();
 }

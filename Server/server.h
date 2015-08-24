@@ -4,7 +4,10 @@
 #include <QList>
 #include <QSslSocket>
 #include <QMainWindow>
+#include <QFile>
 #include "sslserver.h"
+#include "registrationdialog.h"
+#include "user.h"
 
 namespace Ui {
   class Server;
@@ -34,15 +37,23 @@ protected slots:
   void connectionClosed();
   void connectionFailure();
 
+private slots:
+  void on_regNewUsrButton_clicked();
+  void addUser(QString name, QString pwd);
+
 private:
   void checkFileStatus();
+  void checkUsersFile();
 
 private:
   QString key;
   QString certificate;
   SslServer server;
   QList<QSslSocket *> sockets;
-  Ui::Server *ui;
+  QList<User *> users;
+  Ui::Server* ui;
+  RegistrationDialog *regDialog;
+  QFile* usersFile;
 };
 
 #endif // SERVER_H
