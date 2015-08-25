@@ -16,9 +16,6 @@ Server::Server(QWidget *parent) :
 
   regDialog = new RegistrationDialog(this);
 
-  //If the file whis usernames exist, save them in container.
-  checkUsersFile();
-
   // Check for SSL support.  If SSL support is not available, show a
   // message to the user describing what to do to enable SSL support.
   if (QSslSocket::supportsSsl())
@@ -38,11 +35,6 @@ Server::Server(QWidget *parent) :
     ui->logTextEdit->setText(noSslMsg);
   }
 
-  foreach (User *u, users)
-  {
-      qDebug() << u->name() << "    " << u->passwd();
-  }
-
   connect(&server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
   connect(regDialog, SIGNAL(pushButtonAccept(QString, QString)), this, SLOT(addUser(QString,QString)));
 }
@@ -54,9 +46,12 @@ Server::~Server()
     server.close();
   }
 
-  foreach (QSslSocket *socket, sockets)
+  QHashIterator<QSslSocket *, User *> iter(usersWhithSockets);
+  while (iter.hasNext())
   {
-    delete socket;
+      iter.next();
+      delete iter.value();
+      delete iter.key();
   }
 
   delete ui;
@@ -132,19 +127,18 @@ void Server::checkFileStatus()
   }
 }
 
-void Server::checkUsersFile()
+bool Server::isKnownUser(QString msg)
 {
-    usersFile = new QFile("usersFile.txt");
-    if (!usersFile->open(QIODevice::ReadOnly | QIODevice::Text))
-      return;
+  if (!usersFile->open(QIODevice::ReadOnly | QIODevice::Text))
+    qDebug() << "Can`t open file.";
 
-    while (!usersFile->atEnd())
-    {
-      QString line = usersFile->readLine();
-      QStringList listFromLine = line.split("::");
-      users.push_back(new User(listFromLine[0], listFromLine[1]));
-    }
-    usersFile->close();
+  while (!usersFile->atEnd())
+  {
+    QString line = usersFile->readLine();
+    if (line == msg)
+      return true;
+  }
+  return false;
 }
 
 // Accept connection from server and initiate the SSL handshake
@@ -177,12 +171,26 @@ void Server::handshakeComplete()
   connect(socket, SIGNAL(disconnected()), this, SLOT(connectionClosed()));
   connect(socket, SIGNAL(readyRead()), this, SLOT(receiveMessage()));
 
-  ui->logTextEdit->append(QString("[%1] Accepted connection from %2:%3")
+  // Read messege and add user, or delete socket, if user do not known.
+  QString msg = socket->readLine();
+  QStringList nameWhithPwd = msg.split("::");
+  if (isKnownUser(msg))
+  {
+    usersWhithSockets.insert(socket, new User(nameWhithPwd[0], nameWhithPwd[1]));
+  }
+  else
+  {
+    socket->write(QString("Wrong name or password.").toLocal8Bit().constData());
+    socket->disconnect();
+    socket->deleteLater();
+    return;
+  }
+
+  ui->logTextEdit->append(QString("[%1] Accepted connection from %2:%3. Username: %4")
                           .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
                           .arg(socket->peerAddress().toString())
-                          .arg(socket->peerPort()));
-
-  sockets.push_back(socket);
+                          .arg(socket->peerPort())
+                          .arg(nameWhithPwd[0]));
 }
 
 void Server::sslErrors(const QList<QSslError> &errors)
@@ -215,21 +223,14 @@ void Server::receiveMessage()
   if (socket->canReadLine())
   {
     QByteArray message = socket->readLine();
-    QString sender = QString("%1:%2")
-        .arg(socket->peerAddress().toString())
-        .arg(socket->peerPort());
+    QString sender = QString("%1:")
+        .arg(usersWhithSockets.take(socket)->name());
 
-    ui->logTextEdit->append(QString("[%1] %2 sent: %3")
+    ui->logTextEdit->append(QString("[%1] %2: %3")
         .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
         .arg(sender)
         .arg(message.constData()));
-
-    sender += " -> ";
-    foreach (QSslSocket *s, sockets)
-    {
-      s->write(sender.toLocal8Bit().constData());
-      s->write(message);
-    }
+// Execute commands.
   }
 }
 
@@ -243,7 +244,7 @@ void Server::connectionClosed()
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(socket->errorString()));
-  sockets.removeOne(socket);
+  usersWhithSockets.remove(socket);
   socket->disconnect();
   socket->deleteLater();
 }
@@ -258,23 +259,21 @@ void Server::connectionFailure()
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(socket->errorString()));
-  sockets.removeOne(socket);
   socket->disconnect();
   socket->deleteLater();
 }
 
 void Server::on_regNewUsrButton_clicked()
 {
-    regDialog->setVisible(true);
+  regDialog->setVisible(true);
 }
 
 void Server::addUser(QString name, QString pwd)
 {
-    users.push_back(new User(name, pwd));
-    if (!usersFile->open(QIODevice::Append | QIODevice::Text))
-        return;
+  if (!usersFile->open(QIODevice::Append | QIODevice::Text))
+    return;
 
-    QString line = "\n" + name + "::" + pwd;
-    usersFile->write(line.toStdString().c_str());
-    usersFile->close();
+  QString line = "\n" + name + "::" + pwd;
+  usersFile->write(line.toStdString().c_str());
+  usersFile->close();
 }

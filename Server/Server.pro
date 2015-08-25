@@ -15,8 +15,7 @@ TEMPLATE = app
 SOURCES += main.cpp\
         server.cpp \
     sslserver.cpp \
-    registrationdialog.cpp \
-    user.cpp
+    registrationdialog.cpp
 
 HEADERS  += server.h \
     sslserver.h \

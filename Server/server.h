@@ -1,7 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <QList>
+#include <QHash>
 #include <QSslSocket>
 #include <QMainWindow>
 #include <QFile>
@@ -43,14 +43,13 @@ private slots:
 
 private:
   void checkFileStatus();
-  void checkUsersFile();
+  bool isKnownUser(QString msg);
 
 private:
   QString key;
   QString certificate;
   SslServer server;
-  QList<QSslSocket *> sockets;
-  QList<User *> users;
+  QHash<QSslSocket *, User *> usersWhithSockets;
   Ui::Server* ui;
   RegistrationDialog *regDialog;
   QFile* usersFile;
