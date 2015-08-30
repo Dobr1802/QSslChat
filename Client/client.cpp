@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include "client.h"
 #include "ui_client.h"
+#include <QFileDialog>
 
 Client::Client(QWidget *parent) :
   QMainWindow(parent),
@@ -55,6 +56,7 @@ void Client::connectDisconnectButtonPressed()
   if (socket.state() == QAbstractSocket::UnconnectedState)
   {
     // Initiate an SSL connection to the chat server.
+    socket.setPeerVerifyMode(QSslSocket::VerifyPeer);
     socket.connectToHostEncrypted(ui->hostnameLineEdit->text(), ui->portSpinBox->value());
   }
   else
@@ -132,4 +134,16 @@ void Client::socketError()
     connectionClosed();
   }
   socket.close();
+}
+
+void Client::on_pushButton_clicked()
+{
+  QString key = QFileDialog::getOpenFileName(this, "Select Key File");
+  socket.setPrivateKey(key);
+}
+
+void Client::on_pushButton_2_clicked()
+{
+  QString cert = QFileDialog::getOpenFileName(this, "Select Certificate File");
+  socket.setLocalCertificate(cert);
 }

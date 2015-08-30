@@ -28,6 +28,11 @@ protected slots:
   void connectionClosed();
   void socketError();
 
+private slots:
+  void on_pushButton_clicked();
+
+  void on_pushButton_2_clicked();
+
 private:
   QSslSocket socket;
   Ui::Client *ui;

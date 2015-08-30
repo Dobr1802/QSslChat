@@ -1,13 +1,12 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <QHash>
-#include <QSslSocket>
 #include <QMainWindow>
 #include <QFile>
 #include "sslserver.h"
 #include "registrationdialog.h"
 #include "user.h"
+#include "worker.h"
 
 namespace Ui {
   class Server;
@@ -33,7 +32,7 @@ protected slots:
   void acceptConnection();
   void handshakeComplete();
   void sslErrors(const QList<QSslError> &errors);
-  void receiveMessage();
+  void sendMessage();
   void connectionClosed();
   void connectionFailure();
 
@@ -43,16 +42,17 @@ private slots:
 
 private:
   void checkFileStatus();
-  bool isKnownUser(QString msg);
+//  bool isKnownUser(QString msg);
+  bool isUserAutorise();
 
 private:
   QString key;
   QString certificate;
   SslServer server;
-  QHash<QSslSocket *, User *> usersWhithSockets;
   Ui::Server* ui;
   RegistrationDialog *regDialog;
   QFile* usersFile;
+  Worker *worker;
 };
 
 #endif // SERVER_H
