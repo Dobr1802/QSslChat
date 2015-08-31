@@ -51,6 +51,7 @@ private:
   SslServer server;
   Ui::Server* ui;
   RegistrationDialog *regDialog;
+  QList<QSslSocket *> tempSockets;
   QFile* usersFile;
   Worker *worker;
 };
