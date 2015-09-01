@@ -34,9 +34,6 @@ protected slots:
   void connectionClosed();
   void connectionFailure();
 
-private slots:
-  void on_regNewUsrButton_clicked();
-
 private:
   void checkFileStatus();
 
