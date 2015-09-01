@@ -17,10 +17,11 @@ class User : public QObject
   QSslSocket *_socket;
   QProcess *_process;
   QTextCodec *_codec;
-  QFile *file;
+  QFile *_file;
 
 public:
   User(QSslSocket *s);
+  ~User();
 
 public slots:
   void sendMessage();

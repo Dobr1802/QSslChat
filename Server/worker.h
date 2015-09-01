@@ -10,8 +10,8 @@ class Worker : public QObject
   QList<User *> users;
 public:
   explicit Worker(QObject *parent = 0) : QObject(parent) {}
+  ~Worker();
 
-  void takeCommand(QSslSocket *s);
   void addUser(QSslSocket *s);
 };
 

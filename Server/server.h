@@ -42,7 +42,6 @@ private:
   QString certificate;
   SslServer server;
   Ui::Server* ui;
-  QFile* usersFile;
   Worker *worker;
 };
 

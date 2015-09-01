@@ -3,7 +3,7 @@
 
 User::User(QSslSocket *s) : _socket(s)
 {
-  file = new QFile("log.txt");
+  _file = new QFile("log.txt");
 
   _name = QString("%1:%2").arg(s->peerAddress().toString())
                           .arg(s->peerPort());
@@ -11,10 +11,17 @@ User::User(QSslSocket *s) : _socket(s)
   _process = new QProcess(this);
 
   connect(_process, SIGNAL(readyRead()), this, SLOT(readCmd()));
+  connect(_process, SIGNAL(disconnect()), this, SLOT(deleteLater()));
 
   _codec = QTextCodec::codecForName("IBM 866");
   _process->start("cmd /K");
   _process->readyRead();
+}
+
+User::~User()
+{
+  delete _process;
+  delete _file;
 }
 
 void User::sendMessage()
@@ -23,10 +30,10 @@ void User::sendMessage()
   {
     QString msg = _socket->readAll();
 
-    file->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append);
-    QTextStream out(file);
+    _file->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append);
+    QTextStream out(_file);
     out << _name << ":" << msg << "\n";
-    file->close();
+    _file->close();
 
     _process->write(msg.toStdString().c_str());
     _process->readyRead();

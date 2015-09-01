@@ -14,8 +14,6 @@ Server::Server(QWidget *parent) :
 {
   ui->setupUi(this);
 
-  usersFile = new QFile("usersFile.txt");
-
   worker = new Worker();
 
   // Check for SSL support.  If SSL support is not available, show a

@@ -133,15 +133,3 @@ void Client::socketError()
   }
   socket.close();
 }
-
-void Client::on_pushButton_clicked()
-{
-  QString key = QFileDialog::getOpenFileName(this, "Select Key File");
-  socket.setPrivateKey(key);
-}
-
-void Client::on_pushButton_2_clicked()
-{
-  QString cert = QFileDialog::getOpenFileName(this, "Select Certificate File");
-  socket.setLocalCertificate(cert);
-}
