@@ -15,17 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         server.cpp \
     sslserver.cpp \
-    registrationdialog.cpp \
     worker.cpp \
-    userwrapper.cpp \
     user.cpp
 
 HEADERS  += server.h \
     sslserver.h \
     user.h \
-    registrationdialog.h \
-    worker.h \
-    userwrapper.h
+    worker.h
 
-FORMS    += server.ui \
-    registrationdialog.ui
+FORMS    += server.ui

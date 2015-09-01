@@ -4,23 +4,25 @@
 #include <QString>
 #include <QProcess>
 #include <QSslSocket>
+#include <QTextCodec>
 
 using namespace std;
 
-class User
+class User : public QObject
 {
-  QString _name, _passwd, _textOfMsg = "";
+  Q_OBJECT
+
+  QString _name, _textOfMsg;
   QSslSocket *_socket;
   QProcess *_process;
+  QTextCodec *_codec;
 
 public:
-  User(QString &name, QString &pwd, QSslSocket *s);
+  User(QSslSocket *s);
 
-  const QString &name() const;
-  const QString &passwd() const;
-  const QSslSocket *socket() const;
-
-  void takeMsg(QString &msg);
+public slots:
+  void sendMessage();
+//  void readCmd();
 };
 
 #endif // USER_H

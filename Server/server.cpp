@@ -15,9 +15,8 @@ Server::Server(QWidget *parent) :
   ui->setupUi(this);
 
   usersFile = new QFile("usersFile.txt");
-  regDialog = new RegistrationDialog(this);
 
-  worker = new Worker(QTextCodec::codecForName("IBM 866"));
+  worker = new Worker();
 
   // Check for SSL support.  If SSL support is not available, show a
   // message to the user describing what to do to enable SSL support.
@@ -39,7 +38,6 @@ Server::Server(QWidget *parent) :
   }
 
   connect(&server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
-  connect(regDialog, SIGNAL(pushButtonAccept(QString, QString)), this, SLOT(addUser(QString,QString)));
 }
 
 Server::~Server()
@@ -50,8 +48,6 @@ Server::~Server()
   }
 
   delete worker;
-  delete codec;
-  delete usersFile;
   delete ui;
 }
 
@@ -125,20 +121,6 @@ void Server::checkFileStatus()
   }
 }
 
-bool Server::isKnownUser(QString msg)
-{
-  if (!usersFile->open(QIODevice::ReadOnly | QIODevice::Text))
-    qDebug() << "Can`t open file.";
-
-  while (!usersFile->atEnd())
-  {
-    QString line = usersFile->readLine();
-    if (line == msg)
-      return true;
-  }
-  return false;
-}
-
 // Accept connection from server and initiate the SSL handshake
 void Server::acceptConnection()
 {
@@ -165,32 +147,14 @@ void Server::handshakeComplete()
 {
   QSslSocket *socket = dynamic_cast<QSslSocket *>(sender());
   assert(socket);
-
   connect(socket, SIGNAL(disconnected()), this, SLOT(connectionClosed()));
-  connect(socket, SIGNAL(readyRead()), this, SLOT(sendMessage()));
 
-  sockets.push_back(socket);
-
-//  Read messege and add user, or delete socket, if user do not known.
-  QString msg = socket->readLine();
-  QStringList nameWhithPwd = msg.split("::");
-  if (isKnownUser(msg))
-  {
-    usersWhithSockets.insert(socket, new User(nameWhithPwd[0], nameWhithPwd[1]));
-  }
-  else
-  {
-    socket->write(QString("Wrong name or password.").toLocal8Bit().constData());
-    socket->disconnect();
-    socket->deleteLater();
-    return;
-  }
+  worker->addUser(socket);
 
   ui->logTextEdit->append(QString("[%1] Accepted connection from %2:%3.")
                           .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort()));
-//                          .arg(nameWhithPwd[0]));
 }
 
 void Server::sslErrors(const QList<QSslError> &errors)
@@ -215,25 +179,6 @@ void Server::sslErrors(const QList<QSslError> &errors)
                           .arg(errorStrings));
 }
 
-void Server::sendMessage()
-{
-  QSslSocket *socket = dynamic_cast<QSslSocket *>(sender());
-  assert(socket);
-
-  worker->takeCommand(socket);
-
-
-
-    QString sender = QString("%1::%2")
-        .arg(socket->peerAddress().toString())
-        .arg(socket->peerPort());
-
-//    ui->logTextEdit->append(QString("[%1] %2: %3")
-//        .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
-//        .arg(sender)
-//        .arg(textOfMsg));
-}
-
 void Server::connectionClosed()
 {
   QSslSocket *socket = dynamic_cast<QSslSocket *>(sender());
@@ -244,8 +189,6 @@ void Server::connectionClosed()
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(socket->errorString()));
-//  usersWhithSockets.remove(socket);
-  sockets.removeOne(socket);
   socket->disconnect();
   socket->deleteLater();
 }
@@ -260,28 +203,6 @@ void Server::connectionFailure()
                           .arg(socket->peerAddress().toString())
                           .arg(socket->peerPort())
                           .arg(socket->errorString()));
-  sockets.removeOne(socket);
   socket->disconnect();
   socket->deleteLater();
 }
-
-void Server::on_regNewUsrButton_clicked()
-{
-  regDialog->setVisible(true);
-}
-
-//void Server::readFromCmd()
-//{
-//  QString str = process->readAll();
-//  textOfMsg.append(str);
-//}
-
-//void Server::addUser(QString name, QString pwd)
-//{
-//  if (!usersFile->open(QIODevice::Append | QIODevice::Text))
-//    return;
-
-//  QString line = "\n" + name + "::" + pwd;
-//  usersFile->write(line.toStdString().c_str());
-//  usersFile->close();
-//}

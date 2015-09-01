@@ -112,9 +112,7 @@ void Client::receiveMessage()
 {
   if (socket.canReadLine())
   {
-    ui->chatDisplayTextEdit->append(QString("[%1] %2")
-                                    .arg(QDateTime::currentDateTime().toString("hh:mm:ss.zzz"))
-                                    .arg(socket.readLine().constData()));
+    ui->chatDisplayTextEdit->append(socket.readAll().constData());
   }
 }
 

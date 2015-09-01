@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QFile>
 #include "sslserver.h"
-#include "registrationdialog.h"
 #include "user.h"
 #include "worker.h"
 
@@ -32,26 +31,20 @@ protected slots:
   void acceptConnection();
   void handshakeComplete();
   void sslErrors(const QList<QSslError> &errors);
-  void sendMessage();
   void connectionClosed();
   void connectionFailure();
 
 private slots:
   void on_regNewUsrButton_clicked();
-  void addUser(QString name, QString pwd);
 
 private:
   void checkFileStatus();
-//  bool isKnownUser(QString msg);
-  bool isUserAutorise();
 
 private:
   QString key;
   QString certificate;
   SslServer server;
   Ui::Server* ui;
-  RegistrationDialog *regDialog;
-  QList<QSslSocket *> tempSockets;
   QFile* usersFile;
   Worker *worker;
 };

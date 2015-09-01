@@ -141,13 +141,6 @@
       </property>
      </widget>
     </item>
-    <item>
-     <widget class="QPushButton" name="regNewUsrButton">
-      <property name="text">
-       <string>New user</string>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
  </widget>
