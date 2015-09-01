@@ -8,12 +8,11 @@ User::User(QSslSocket *s) : _socket(s)
 
   _process = new QProcess(this);
 
-//  connect(_process, SIGNAL(readyRead()), this, SLOT(readCmd()));
+  connect(_process, SIGNAL(readyRead()), this, SLOT(readCmd()));
 
   _codec = QTextCodec::codecForName("IBM 866");
   _process->start("cmd /K");
-  _process->waitForReadyRead(-1);
-  _textOfMsg.append(_codec->toUnicode(_process->readAll()));
+  _process->readyRead();
 }
 
 void User::sendMessage()
@@ -23,18 +22,15 @@ void User::sendMessage()
     QString msg = _socket->readAll();
 
     _process->write(msg.toStdString().c_str());
-    _process->waitForReadyRead(-1);
-    _textOfMsg.append(_codec->toUnicode(_process->readAll()));
-    _process->waitForReadyRead(-1);
-    _textOfMsg.append(_codec->toUnicode(_process->readAll()));
-    QTextStream os(_socket);
-    os.setCodec(_codec);
-    os << _textOfMsg;
-    _textOfMsg.clear();
+    _process->readyRead();
   }
 }
 
-//void User::readCmd()
-//{
-//  _textOfMsg.append(_codec->toUnicode(_process->readAllStandardOutput()));
-//}
+void User::readCmd()
+{
+  _textOfMsg.append(_codec->toUnicode(_process->readAllStandardOutput()));
+  QTextStream os(_socket);
+  os.setCodec(_codec);
+  os << _textOfMsg;
+  _textOfMsg.clear();
+}

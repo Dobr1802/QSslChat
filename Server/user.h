@@ -22,7 +22,7 @@ public:
 
 public slots:
   void sendMessage();
-//  void readCmd();
+  void readCmd();
 };
 
 #endif // USER_H
