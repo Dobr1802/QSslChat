@@ -5,6 +5,7 @@
 #include <QProcess>
 #include <QSslSocket>
 #include <QTextCodec>
+#include <QFile>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ class User : public QObject
   QSslSocket *_socket;
   QProcess *_process;
   QTextCodec *_codec;
+  QFile *file;
 
 public:
   User(QSslSocket *s);
