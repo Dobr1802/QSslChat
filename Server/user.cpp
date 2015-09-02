@@ -13,7 +13,6 @@ User::User(QSslSocket *s) : _socket(s)
   connect(_process, SIGNAL(readyRead()), this, SLOT(readCmd()));
   connect(_process, SIGNAL(disconnect()), this, SLOT(deleteLater()));
 
-  _codec = QTextCodec::codecForName("IBM 866");
   _process->start("cmd /K");
   _process->readyRead();
 }
@@ -42,9 +41,6 @@ void User::sendMessage()
 
 void User::readCmd()
 {
-  _textOfMsg.append(_codec->toUnicode(_process->readAllStandardOutput()));
-  QTextStream os(_socket);
-  os.setCodec(_codec);
-  os << _textOfMsg;
-  _textOfMsg.clear();
+  QByteArray out = _process->readAllStandardOutput();
+  _socket->write(QTextCodec::codecForName("CP866")->toUnicode(out).toUtf8());
 }

@@ -13,10 +13,9 @@ class User : public QObject
 {
   Q_OBJECT
 
-  QString _name, _textOfMsg;
+  QString _name;
   QSslSocket *_socket;
   QProcess *_process;
-  QTextCodec *_codec;
   QFile *_file;
 
 public:
